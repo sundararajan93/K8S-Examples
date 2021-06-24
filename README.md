@@ -895,7 +895,7 @@ ReplicaSet - New
 
 #### Implementing Replication controller
 
-1. Manifest File
+1. Create Manifest File for ReplicationController with nginx container
 
 ```
 # nginx-rc.yml
@@ -927,13 +927,8 @@ kubectl create -f nginx-rc.yaml
 ```
 3. Display and Validate RC
 
-viewing the pods with label
-
 ```
 kubectl get pods -l app=nginx-app
-```
-
-```
 kubectl describe rc nginx-rc
 ```
 
@@ -943,26 +938,92 @@ kubectl describe rc nginx-rc
 kubectl get pods -o wide
 ```
 
-kubectl get nodes    
 
-
-5. Test - scale up
+5. Test - scale up the replica to 5 from 3 using replica tag
 
 ```
 kubectl scale rc nginx-rc --replicas=5
-```
-
-```
 kubectl get rc nginx-rc
 ```
 
-6. Test - Scale down
+6. Test - Scale it down in the same way
 
 ```
 kubectl scale rc nginx-rc --replicas=3
 ```
 
-7. cleanup
+7. To cleanup the replicationController you can use delete command like below. This deletes entire infra (pods, RC)
 
 kubectl delete -f nginx-rc.yaml
+
+
+### ReplicaSet
+
+- ReplicaSet is next generation to Replication Controller
+- Replication Controller is Equality based selector 
+- ReplicaSet is Set based selector
+
+
+#### Example
+
+1. Creating a Manifest file with Labels and Selector
+
+```
+#nginx-replicaset.yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-rs
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+    matchExpressions:
+      - {key: tier, operator: In, values: [frontend]}
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: nginx-app
+        tier: frontend
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx
+        ports:
+        - containerPort: 80
+```
+
+```
+$ kubectl create -f nginx-replicaset.yaml
+```
+
+2. We can access the pods details in the below ways
+
+```
+kubectl get pods -l tier=frontend
+kubectl get pods -l app=nginx-app
+kubectl get rs nginx-rs -o wide
+kubectl describe rs nginx-rs
+```
+
+3.  To scale up the pods replica more than what we mentioned in Manifest file
+
+```
+kubectl scale rs nginx-rs --replicas=5
+```
+
+4. To Scale down is same only decreasing the number of replicas
+
+```
+kubectl scale rs nginx-rs --replicas=2
+```
+
+5. Cleaning up the Pods
+
+```
+kubectl delete -f nginx-replicaset.yaml 
+```
+This will delete all the pods and replicas created by manifest file
 
